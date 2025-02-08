@@ -125,5 +125,20 @@ If you need to remove Ollama:
 
 ---
 
+## 🔹 **Ollama Terminal Commands**
+
+| Command         | Description |
+|----------------|-------------|
+| `/set`         | Set session variables |
+| `/show`        | Show model information |
+| `/load <model>` | Load a session or model |
+| `/save <model>` | Save your current session |
+| `/clear`       | Clear session context |
+| `/bye`         | Exit |
+| `/?`, `/help`  | Help for a command |
+| `/? shortcuts` | Help for keyboard shortcuts |
+
+---
+
 ## 🎉 **Enjoy Chatting with DeepSeek-R1 1.5B!** 🚀
 
