@@ -1,4 +1,4 @@
-# ** CodeSage AI 🧙‍♂️💻** 🚀🧠  
+# CodeSage AI 🧙‍♂️💻🚀🧠  
 *A Streamlit-based AI-powered code assistant using LangChain & Ollama*
 
 ---
