@@ -1,0 +1,148 @@
+Below is a detailed document that explains both the Retrieval-Augmented Generation (RAG) approach and the non-RAG approach, along with example code snippets and explanations.
+
+Document: Retrieval-Augmented Generation (RAG) vs. Non-RAG Approaches
+
+1. Overview
+
+When building AI systems that interact with large documents, two common strategies emerge:
+	•	Non-RAG Approach:
+Processes the entire document (or large parts of it) indiscriminately.
+	•	RAG (Retrieval-Augmented Generation) Approach:
+Retrieves only the most relevant portions of the document based on the user’s query before generating a response.
+
+The key difference lies in how the document context is prepared and used in the prompt that is sent to the language model.
+
+2. Non-RAG Approach
+
+Workflow
+	1.	Upload and Text Extraction:
+	•	A PDF or web document is uploaded.
+	•	The entire document is read and its text is extracted.
+	2.	Chunking:
+	•	The extracted text is split into fixed-size chunks (e.g., 5000 characters with overlap) without consideration for relevance.
+	•	Example Code:
+
+def split_text_into_chunks(text, chunk_size=5000, overlap=500):
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+        start = end - overlap
+    return chunks
+
+
+	3.	Processing Each Chunk:
+	•	Each chunk is processed sequentially by sending it to the language model with a prompt.
+	•	The prompt might be structured as follows:
+
+Act as a podcast host and guest discussing this research.
+Text:
+[Chunk of the document]
+
+
+	4.	Generating Output:
+	•	The responses from each chunk are concatenated to produce the final output.
+	•	This output might include irrelevant or redundant information since all parts of the document are processed equally.
+
+Limitations
+	•	Context Overload:
+The language model is given the entire document or large chunks, which might include many irrelevant details.
+	•	Reduced Focus:
+When a specific query is made (e.g., “What are the key findings about climate change?”), the model might still consider unrelated sections of the document, leading to less precise answers.
+
+3. Retrieval-Augmented Generation (RAG) Approach
+
+Workflow
+	1.	Upload and Text Extraction:
+	•	Similar to non-RAG, a document is uploaded and its text is extracted.
+	2.	Chunking:
+	•	The document is split into smaller chunks (for instance, 1000 characters with some overlap) to ensure fine-grained retrieval.
+	3.	Indexing in a Vector Store:
+	•	Each chunk is converted into an embedding—a numerical representation that captures the meaning of the text.
+	•	These embeddings are stored in a vector database.
+	•	Example Code:
+
+# Assume `document_chunks` is a list of text chunks
+from langchain_ollama import OllamaEmbeddings
+from langchain_core.vectorstores import InMemoryVectorStore
+
+EMBEDDING_MODEL = OllamaEmbeddings(model="deepseek-r1:7b")
+DOCUMENT_VECTOR_DB = InMemoryVectorStore(EMBEDDING_MODEL)
+
+def index_documents(document_chunks):
+    DOCUMENT_VECTOR_DB.add_documents(document_chunks)
+
+
+	4.	User Query and Similarity Search:
+	•	When a user submits a query (e.g., “What are the key findings about climate change?”), the query is converted into an embedding.
+	•	A similarity search is performed in the vector store to retrieve only the most relevant document chunks.
+	•	Example Code:
+
+def find_related_documents(query):
+    return DOCUMENT_VECTOR_DB.similarity_search(query)
+
+
+	5.	Constructing a Focused Prompt:
+	•	The relevant chunks are combined to form the document_context.
+	•	The prompt is then structured like this:
+
+You are an expert research assistant. Use the provided context to answer the query. 
+If unsure, state that you don't know. Be concise and factual (max 3 sentences).
+
+Query: {user_query} 
+Context: {document_context}
+Answer:
+
+
+	6.	Generating the Answer:
+	•	The language model generates a response using this focused context.
+	•	Example Code:
+
+def generate_answer(user_query, context_documents):
+    context_text = "\n\n".join([doc.page_content for doc in context_documents])
+    conversation_prompt = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    response_chain = conversation_prompt | LANGUAGE_MODEL
+    return response_chain.invoke({"user_query": user_query, "document_context": context_text})
+
+
+
+Benefits
+	•	Focused Context:
+Only the relevant sections of the document are fed to the model. For example, if the document is 100 pages long but only a few pages contain information about climate change, only those pages are retrieved and used.
+	•	Enhanced Accuracy:
+The response is more precise because the model isn’t distracted by unrelated information.
+	•	Efficiency:
+The system processes less data per query, reducing computational overhead and improving response time.
+
+4. Example Scenario
+
+Scenario: Uploading a PDF Research Paper
+
+Non-RAG Approach:
+	•	Process:
+	•	A user uploads a 100-page research paper.
+	•	The system extracts all text and splits it into several 5000-character chunks.
+	•	When the user asks, “What are the key findings about climate change?” every chunk is processed.
+	•	Outcome:
+	•	The generated output might mix information from various sections (e.g., methodology, background, etc.), leading to a less focused summary.
+
+RAG Approach:
+	•	Process:
+	•	The same 100-page research paper is split into 1000-character chunks.
+	•	Each chunk is embedded and stored in a vector store.
+	•	The user’s query “What are the key findings about climate change?” is embedded and used to perform a similarity search.
+	•	Only the chunks discussing climate change are retrieved.
+	•	A prompt is constructed with the user’s query and the relevant chunks.
+	•	Outcome:
+	•	The language model generates a concise and accurate response that focuses solely on the climate change findings.
+
+5. Conclusion
+	•	Non-RAG Systems:
+Process the document as a whole, without filtering for relevance. This can lead to information overload and less precise responses.
+	•	RAG Systems:
+Enhance performance by retrieving and using only the most relevant document context based on the user’s query. This makes them especially suitable for large or complex documents where pinpointing relevant sections is crucial for accuracy.
+
+By adding a retrieval layer (via similarity search in a vector store) and dynamically constructing the prompt with only relevant context, you transform a basic text-processing pipeline into a robust Retrieval-Augmented Generation (RAG) system.
+
+This document outlines the differences and clearly demonstrates how a retrieval step is key to moving from a non-RAG system to a true RAG system.
