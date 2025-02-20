@@ -18,6 +18,13 @@ st.markdown("""
         background-color: #1E1E1E !important;
         color: #FFFFFF !important;
         border: 1px solid #3A3A3A !important;
+        border-radius: 8px !important;
+        padding: 12px !important;
+    }
+    
+    .stChatInput input:focus {
+        border-color: #00FFAA !important;
+        box-shadow: 0 0 0 1px #00FFAA !important;
     }
     
     /* User Message Styling */
@@ -25,9 +32,10 @@ st.markdown("""
         background-color: #1E1E1E !important;
         border: 1px solid #3A3A3A !important;
         color: #E0E0E0 !important;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
+        border-radius: 12px;
+        padding: 18px;
+        margin: 12px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     
     /* Assistant Message Styling */
@@ -35,30 +43,68 @@ st.markdown("""
         background-color: #2A2A2A !important;
         border: 1px solid #404040 !important;
         color: #F0F0F0 !important;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
+        border-radius: 12px;
+        padding: 18px;
+        margin: 12px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
     
     /* Avatar Styling */
     .stChatMessage .avatar {
         background-color: #00FFAA !important;
         color: #000000 !important;
+        padding: 8px;
+        border-radius: 50%;
     }
     
     /* Text Color Fix */
     .stChatMessage p, .stChatMessage div {
         color: #FFFFFF !important;
+        line-height: 1.6;
     }
     
     .stFileUploader {
         background-color: #1E1E1E;
-        border: 1px solid #3A3A3A;
-        border-radius: 5px;
-        padding: 15px;
+        border: 2px dashed #3A3A3A;
+        border-radius: 10px;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .stFileUploader:hover {
+        border-color: #00FFAA;
     }
     
     h1, h2, h3 {
+        color: #00FFAA !important;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .stButton button {
+        background-color: #00FFAA !important;
+        color: #0E1117 !important;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .stButton button:hover {
+        background-color: #00CC88 !important;
+        box-shadow: 0 4px 8px rgba(0,255,170,0.2);
+    }
+
+    .success-message {
+        background-color: rgba(0,255,170,0.1);
+        border: 1px solid #00FFAA;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+
+    .stSpinner {
         color: #00FFAA !important;
     }
     </style>
@@ -110,10 +156,18 @@ def generate_answer(user_query, context_documents):
 
 
 # UI Configuration
-
-
-st.title("📘 DocuMind AI")
+st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+st.title("CodeSage AI 🧙‍♂️💻🚀🧠")
 st.markdown("### Your Intelligent Document Assistant")
+st.markdown("</div>", unsafe_allow_html=True)
+st.markdown("""
+    <div style='background-color: #1E1E1E; padding: 20px; border-radius: 10px; margin: 20px 0;'>
+        <p style='color: #CCCCCC; margin: 0;'>
+            Upload your PDF document and ask questions about its content. 
+            CodeSage AI  will analyze the document and provide accurate, concise answers.
+        </p>
+    </div>
+""", unsafe_allow_html=True)
 st.markdown("---")
 
 # File Upload Section
@@ -122,16 +176,20 @@ uploaded_pdf = st.file_uploader(
     type="pdf",
     help="Select a PDF document for analysis",
     accept_multiple_files=False
-
 )
 
 if uploaded_pdf:
-    saved_path = save_uploaded_file(uploaded_pdf)
-    raw_docs = load_pdf_documents(saved_path)
-    processed_chunks = chunk_documents(raw_docs)
-    index_documents(processed_chunks)
+    with st.spinner("📄 Processing document..."):
+        saved_path = save_uploaded_file(uploaded_pdf)
+        raw_docs = load_pdf_documents(saved_path)
+        processed_chunks = chunk_documents(raw_docs)
+        index_documents(processed_chunks)
     
-    st.success("✅ Document processed successfully! Ask your questions below.")
+    st.markdown("""
+        <div class='success-message'>
+            ✅ Document processed successfully! Ask your questions below.
+        </div>
+    """, unsafe_allow_html=True)
     
     user_input = st.chat_input("Enter your question about the document...")
     
@@ -139,9 +197,9 @@ if uploaded_pdf:
         with st.chat_message("user"):
             st.write(user_input)
         
-        with st.spinner("Analyzing document..."):
+        with st.spinner("🤔 Analyzing document..."):
             relevant_docs = find_related_documents(user_input)
             ai_response = generate_answer(user_input, relevant_docs)
             
         with st.chat_message("assistant", avatar="🤖"):
-            st.write(ai_response)
+            st.markdown(f"<div style='white-space: pre-wrap;'>{ai_response}</div>", unsafe_allow_html=True)
